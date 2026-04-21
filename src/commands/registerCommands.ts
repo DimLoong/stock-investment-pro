@@ -21,7 +21,6 @@ export function registerCommands(
     }),
     vscode.commands.registerCommand("extension.showStockPanel", async () => {
       await vscode.commands.executeCommand("workbench.view.explorer");
-      await vscode.commands.executeCommand("stockSummaryView.focus");
       await vscode.commands.executeCommand("stockView.focus");
     }),
     vscode.commands.registerCommand("stockView.editHoldingShares", async (item: StockItem) => {

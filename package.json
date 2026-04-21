@@ -1,7 +1,7 @@
 {
     "name": "stock-investment-pro",
     "displayName": "Stock Investment Pro",
-    "description": "股票看盘工具，支持A股、港股、美股，快速掌握自选股动态",
+    "description": "侧边栏标签页股票看盘工具，支持A股、港股、美股，快速掌握自选股动态",
     "keywords": [
         "stock",
         "炒股",
@@ -51,10 +51,6 @@
         },
         "views": {
             "explorer": [
-                {
-                    "id": "stockSummaryView",
-                    "name": "Stock Summary"
-                },
                 {
                     "id": "stockView",
                     "name": "Stock"

@@ -169,19 +169,23 @@ export function normalizeStockConfig(raw: unknown): StockConfigItem | null {
   }
 
   if (type === "sector") {
+    const order = Number(obj.order);
     return {
       type: "sector",
       code,
       name: obj.name ? String(obj.name).trim() : undefined,
+      order: Number.isFinite(order) && order >= 0 ? Math.floor(order) : undefined,
     };
   }
 
   const market = normalizeMarket(obj.market ? String(obj.market) : undefined) ?? inferMarket(code);
+  const order = Number(obj.order);
   const item: StockConfigItem = {
     type: "stock",
     market,
     code,
     name: obj.name ? String(obj.name).trim() : undefined,
+    order: Number.isFinite(order) && order >= 0 ? Math.floor(order) : undefined,
   };
 
   if (obj.shares !== undefined && obj.shares !== null && obj.shares !== "") {

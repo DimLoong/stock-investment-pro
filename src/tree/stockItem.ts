@@ -9,12 +9,18 @@ export class StockItem extends vscode.TreeItem {
     public readonly iconPath?: vscode.ThemeIcon,
     public readonly configId?: string,
     public readonly itemType?: StockItemType,
-    public readonly isRoot: boolean = false
+    public readonly isRoot: boolean = false,
+    contextValue?: string
   ) {
     super(label, collapsibleState);
     this.description = description;
     this.iconPath = iconPath;
     this.tooltip = "";
+
+    if (contextValue) {
+      this.contextValue = contextValue;
+      return;
+    }
 
     if (isRoot && configId) {
       this.contextValue = itemType === "sector" ? "sectorRoot" : "stockRoot";

@@ -18,6 +18,7 @@ export interface StockConfigItem {
   market?: MarketType;
   shares?: number;
   costPrice?: number;
+  order?: number;
 }
 
 export interface HoldingInfo {

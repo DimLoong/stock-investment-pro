@@ -5,9 +5,16 @@ import { HoldingInfo, StockConfigItem, StockData, SummaryData } from "../models/
 import { displayTag, toApiSecId, toConfigId, toHoldingMap } from "../utils/stockCode";
 import { StockItem } from "./stockItem";
 
-export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem> {
+const DND_MIME = "application/vnd.code.tree.stockView";
+
+export class StockTreeDataProvider
+  implements vscode.TreeDataProvider<StockItem>, vscode.TreeDragAndDropController<StockItem>
+{
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  readonly dropMimeTypes = [DND_MIME];
+  readonly dragMimeTypes = [DND_MIME];
 
   private stocksData = new Map<string, StockData>();
   private stockItems: StockConfigItem[] = [];
@@ -23,8 +30,7 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
 
   constructor(
     private readonly configService: StockConfigService,
-    private readonly apiService: StockApiService,
-    private readonly onSummaryUpdated: (summary: SummaryData) => void
+    private readonly apiService: StockApiService
   ) {}
 
   async initialize(): Promise<void> {
@@ -44,6 +50,54 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
       return Promise.resolve(this.getDetailItems(element.configId));
     }
     return Promise.resolve([]);
+  }
+
+  async handleDrag(
+    source: readonly StockItem[],
+    dataTransfer: vscode.DataTransfer,
+    _token: vscode.CancellationToken
+  ): Promise<void> {
+    const configIds = source.filter((item) => this.isSortableRoot(item)).map((item) => item.configId!);
+    if (configIds.length === 0) {
+      return;
+    }
+    dataTransfer.set(DND_MIME, new vscode.DataTransferItem(JSON.stringify(configIds)));
+  }
+
+  async handleDrop(
+    target: StockItem | undefined,
+    dataTransfer: vscode.DataTransfer,
+    _token: vscode.CancellationToken
+  ): Promise<void> {
+    const transferItem = dataTransfer.get(DND_MIME);
+    if (!transferItem) {
+      return;
+    }
+
+    const raw = await transferItem.value;
+    const payload = typeof raw === "string" ? raw : String(raw);
+    let movingConfigIds: string[] = [];
+
+    try {
+      const parsed = JSON.parse(payload);
+      if (Array.isArray(parsed)) {
+        movingConfigIds = parsed.filter((id): id is string => typeof id === "string");
+      }
+    } catch {
+      return;
+    }
+
+    const targetConfigId = this.isSortableRoot(target) ? target.configId : undefined;
+    const insertAtStart = target?.contextValue === "summaryItem";
+    const reorderedIds = this.buildReorderedIds(movingConfigIds, targetConfigId, insertAtStart);
+    const currentIds = this.stockItems.map((item) => toConfigId(item));
+
+    if (JSON.stringify(reorderedIds) === JSON.stringify(currentIds)) {
+      return;
+    }
+
+    await this.configService.reorder(reorderedIds);
+    await this.refresh();
   }
 
   async refresh(): Promise<void> {
@@ -80,41 +134,54 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
   }
 
   private async fetchAllStockData(): Promise<void> {
-    const requestIds: string[] = [];
+    const stockRequestIds: string[] = [];
+    const sectorCodes: string[] = [];
     this.apiToConfigId.clear();
 
     for (const item of this.stockItems) {
+      if (item.type === "sector") {
+        sectorCodes.push(item.code);
+        continue;
+      }
+
       const apiSecId = toApiSecId(item);
-      requestIds.push(apiSecId);
+      stockRequestIds.push(apiSecId);
       this.apiToConfigId.set(apiSecId, toConfigId(item));
     }
 
-    if (requestIds.length === 0) {
-      this.isLoading = false;
-      this._onDidChangeTreeData.fire();
-      return;
-    }
-
     const updateTime = new Date().toLocaleTimeString("zh-CN");
-    const apiData = await this.apiService.fetchBatchStocks(requestIds, updateTime);
+    const [stockApiData, sectorApiData] = await Promise.all([
+      stockRequestIds.length > 0
+        ? this.apiService.fetchBatchStocks(stockRequestIds, updateTime)
+        : Promise.resolve(new Map<string, StockData>()),
+      sectorCodes.length > 0
+        ? this.apiService.fetchBatchSectors(sectorCodes, updateTime)
+        : Promise.resolve(new Map<string, StockData>()),
+    ]);
 
     this.stocksData.clear();
-    for (const [apiSecId, stockData] of apiData.entries()) {
+    for (const [apiSecId, stockData] of stockApiData.entries()) {
       const configId = this.apiToConfigId.get(apiSecId);
       if (configId) {
         this.stocksData.set(configId, stockData);
       }
     }
 
+    for (const [sectorCode, sectorData] of sectorApiData.entries()) {
+      this.stocksData.set(`sector:${sectorCode}`, sectorData);
+    }
+
     this.isLoading = false;
     this.summary = this.computeSummary(updateTime);
-    this.onSummaryUpdated(this.summary);
     this._onDidChangeTreeData.fire();
   }
 
   private getRootItems(): StockItem[] {
+    const summaryItems = this.getSummaryItems();
+
     if (this.isLoading) {
       return [
+        ...summaryItems,
         new StockItem(
           "行情列表",
           vscode.TreeItemCollapsibleState.None,
@@ -124,7 +191,7 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
       ];
     }
 
-    return this.stockItems.map((config) => {
+    const stockRows = this.stockItems.map((config) => {
       const configId = toConfigId(config);
       const stockData = this.stocksData.get(configId);
 
@@ -159,6 +226,53 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
         true
       );
     });
+
+    return [...summaryItems, ...stockRows];
+  }
+
+  private getSummaryItems(): StockItem[] {
+    const marketValueText = this.summary.hasHoldings ? this.summary.marketValue.toFixed(2) : "--";
+    const dailyProfitLossText = this.summary.hasHoldings
+      ? this.summary.dailyProfitLoss >= 0
+        ? `+${this.summary.dailyProfitLoss.toFixed(2)}`
+        : this.summary.dailyProfitLoss.toFixed(2)
+      : "--";
+
+    return [
+      new StockItem(
+        "持仓市值",
+        vscode.TreeItemCollapsibleState.None,
+        marketValueText,
+        new vscode.ThemeIcon("graph", new vscode.ThemeColor("charts.blue")),
+        undefined,
+        undefined,
+        false,
+        "summaryItem"
+      ),
+      new StockItem(
+        "今日盈亏",
+        vscode.TreeItemCollapsibleState.None,
+        dailyProfitLossText,
+        new vscode.ThemeIcon(
+          this.summary.dailyProfitLoss >= 0 ? "arrow-up" : "arrow-down",
+          new vscode.ThemeColor(this.summary.dailyProfitLoss >= 0 ? "charts.red" : "charts.green")
+        ),
+        undefined,
+        undefined,
+        false,
+        "summaryItem"
+      ),
+      new StockItem(
+        "更新时间",
+        vscode.TreeItemCollapsibleState.None,
+        this.summary.updateTime || "--",
+        new vscode.ThemeIcon("clock"),
+        undefined,
+        undefined,
+        false,
+        "summaryItem"
+      ),
+    ];
   }
 
   private getDetailItems(configId: string): StockItem[] {
@@ -264,5 +378,32 @@ export class StockTreeDataProvider implements vscode.TreeDataProvider<StockItem>
     }
 
     return { marketValue, dailyProfitLoss, updateTime, hasHoldings };
+  }
+
+  private isSortableRoot(item: StockItem | undefined): item is StockItem {
+    return Boolean(item?.isRoot && item.configId);
+  }
+
+  private buildReorderedIds(
+    movingConfigIds: string[],
+    targetConfigId?: string,
+    insertAtStart: boolean = false
+  ): string[] {
+    const currentIds = this.stockItems.map((item) => toConfigId(item));
+    const existing = new Set(currentIds);
+
+    const moving = movingConfigIds.filter((id, index) => existing.has(id) && movingConfigIds.indexOf(id) === index);
+    if (moving.length === 0) {
+      return currentIds;
+    }
+
+    const remaining = currentIds.filter((id) => !moving.includes(id));
+    const insertAt = insertAtStart
+      ? 0
+      : targetConfigId
+        ? Math.max(remaining.indexOf(targetConfigId), 0)
+        : remaining.length;
+
+    return [...remaining.slice(0, insertAt), ...moving, ...remaining.slice(insertAt)];
   }
 }
