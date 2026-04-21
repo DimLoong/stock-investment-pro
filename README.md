@@ -8,7 +8,7 @@
 
 在侧边栏中展示自选股涨跌情况，每隔3秒自动刷新，示例如下：
 
-![示例图](./src/assets/img-0.png)
+<img src="./src/assets/img-0.png" alt="示例图" width="40%">
 
 ---
 
@@ -17,15 +17,24 @@
 ### 快捷方式：
 
 点击标签栏右侧加号进行新增自选股票，支持A股，美股，板块
-![操作示例](./src/assets/img-1.png)
+
+<img src="./src/assets/img-1.png" alt="操作示例" width="60%">
+
 输入股票代码
-![操作示例](./src/assets/img-2.png)
+
+<img src="./src/assets/img-2.png" alt="操作示例" width="60%">
+
 自动识别股票市场
-![操作示例](./src/assets/img-3.png)
+
+<img src="./src/assets/img-3.png" alt="操作示例" width="60%">
+
 [可选] 输入持仓数（股）
-![操作示例](./src/assets/img-4.png)
+
+<img src="./src/assets/img-4.png" alt="操作示例" width="60%">
+
 [可选] 输入持仓成本
-![操作示例](./src/assets/img-5.png)
+
+<img src="./src/assets/img-5.png" alt="操作示例" width="60%">
 
 ## 手动配置
 
