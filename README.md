@@ -1,5 +1,6 @@
-## 股票看盘工具
-
+# 股票看盘工具 Stock Investment Pro
+> 此项目Fork from [coderwang/stock-investment](https://github.com/coderwang/stock-investment)
+> 感谢原作者：[@coderwang](https://github.com/coderwang)
 在侧边栏中展示自选股涨跌情况，每隔3秒自动刷新，示例如下：
 
 ![stock-investment](./src/assets/example.png)
