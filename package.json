@@ -35,14 +35,25 @@
           "type": "array",
           "default": [],
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
           },
-          "description": "自定义股票代码列表。支持两种格式：\n1. 市场.代码（仅查看行情）\n2. 市场.代码:持有股数（查看行情+持仓盈亏）\n例如: 1.600519:100, 0.300316, 116.00700:500, 105.AAPL:10\n(0=深圳, 1=上海, 116=港股, 105、106、107=美股)"
+          "description": "推荐使用 JSON 数组配置。股票示例：{\"type\":\"stock\",\"market\":\"sh\",\"code\":\"600519\",\"shares\":100,\"costPrice\":1680}；板块示例：{\"type\":\"sector\",\"name\":\"航天\",\"code\":\"886078\"}。兼容旧字符串格式并会自动迁移。"
         }
       }
     },
     "views": {
       "explorer": [
+        {
+          "id": "stockSummaryView",
+          "name": "Stock Summary"
+        },
         {
           "id": "stockView",
           "name": "Stock"
@@ -68,7 +79,7 @@
       },
       {
         "command": "stockView.editHoldingShares",
-        "title": "编辑持有股数",
+        "title": "编辑持仓信息",
         "enablement": "view == stockView && viewItem == stockRoot"
       },
       {
@@ -109,7 +120,7 @@
         },
         {
           "command": "stockView.deleteStock",
-          "when": "view == stockView && viewItem == stockRoot",
+          "when": "view == stockView && (viewItem == stockRoot || viewItem == sectorRoot)",
           "group": "stock@2"
         }
       ]
