@@ -1,4 +1,4 @@
-# 侧边栏股票看盘工具 Sibdebar Stock
+# 侧边栏股票看盘工具 Sidebar Stock
 
 > 此项目Fork from [coderwang/stock-investment](https://github.com/coderwang/stock-investment)
 
@@ -69,7 +69,8 @@
 
 ## Todo
 
-1. 支持配置自定义股票名称
+1. 支持配置自定义股票名称，支持配置标签栏名称
 2. 股票异动在标签栏提醒
 3. 期货类型支持
-4. 支持配置标签栏名称
+4. 将获取的数据保存在本地，进行一个虚拟k线图渲染
+5. 批量加入股票自选
