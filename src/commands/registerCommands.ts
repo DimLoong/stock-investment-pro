@@ -351,9 +351,34 @@ async function chooseMarket(defaultMarket: MarketType): Promise<MarketType | und
     value: item.value,
     description: item.value === defaultMarket ? "自动识别" : undefined,
   }));
-  const picked = await vscode.window.showQuickPick(picks, {
-    placeHolder: "请确认股票市场（可修改自动识别结果）",
+
+  const quickPick = vscode.window.createQuickPick<(typeof picks)[number]>();
+  quickPick.title = "请选择股票市场";
+  quickPick.placeholder = "请确认股票市场（可修改自动识别结果）";
+  quickPick.items = picks;
+
+  const defaultItem = picks.find((item) => item.value === defaultMarket);
+  if (defaultItem) {
+    quickPick.activeItems = [defaultItem];
+  }
+
+  const picked = await new Promise<(typeof picks)[number] | undefined>((resolve) => {
+    const onAccept = quickPick.onDidAccept(() => {
+      resolve(quickPick.selectedItems[0] ?? quickPick.activeItems[0]);
+      quickPick.hide();
+    });
+    const onHide = quickPick.onDidHide(() => {
+      resolve(undefined);
+    });
+    quickPick.show();
+
+    quickPick.onDidHide(() => {
+      onAccept.dispose();
+      onHide.dispose();
+      quickPick.dispose();
+    });
   });
+
   return picked?.value;
 }
 
