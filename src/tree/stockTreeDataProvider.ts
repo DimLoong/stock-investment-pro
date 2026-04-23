@@ -292,6 +292,8 @@ export class StockTreeDataProvider
     const stockRows = this.stockItems.map((config) => {
       const configId = toConfigId(config);
       const stockData = this.stocksData.get(configId);
+      const isHoldingStock =
+        config.type === "stock" && (this.holdings.get(configId)?.shares ?? 0) > 0;
 
       if (!stockData) {
         return new StockItem(
@@ -322,12 +324,15 @@ export class StockTreeDataProvider
           : changeNum < 0
             ? new vscode.ThemeColor("charts.green")
             : new vscode.ThemeColor("disabledForeground");
+      const icon = isHoldingStock
+        ? new vscode.ThemeIcon("database", color)
+        : new vscode.ThemeIcon(isAlertUp ? "arrow-up" : isAlertDown ? "arrow-down" : "circle-filled", color);
 
       return new StockItem(
         `${alertPrefix}${config.name ?? stockData.name}`,
         vscode.TreeItemCollapsibleState.Collapsed,
         `${stockData.current} ${arrow} ${stockData.changePercent}%${displayTag(config)}${this.alertHintText(alertState)}`,
-        new vscode.ThemeIcon(isAlertUp ? "arrow-up" : isAlertDown ? "arrow-down" : "circle-filled", color),
+        icon,
         configId,
         config.type,
         true,
