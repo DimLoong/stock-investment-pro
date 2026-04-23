@@ -314,6 +314,8 @@ export class StockTreeDataProvider
       const isAlertDown = alertState?.type === "surgeDown";
       const alertPrefix = isAlertUp ? "⇧⇧ " : isAlertDown ? "⇩⇩ " : "";
       const contextValue = this.isDevTestStock(config) ? "devTestStock" : undefined;
+      const isSector = config.type === "sector";
+      const isIndex = this.isIndexLikeStock(config, stockData);
       const color =
         isAlertUp
           ? new vscode.ThemeColor("charts.red")
@@ -326,7 +328,11 @@ export class StockTreeDataProvider
             : new vscode.ThemeColor("disabledForeground");
       const icon = isHoldingStock
         ? new vscode.ThemeIcon("database", color)
-        : new vscode.ThemeIcon(isAlertUp ? "arrow-up" : isAlertDown ? "arrow-down" : "circle-filled", color);
+        : isSector
+          ? new vscode.ThemeIcon("symbol-namespace", color)
+          : isIndex
+            ? new vscode.ThemeIcon("graph", color)
+            : new vscode.ThemeIcon(isAlertUp ? "arrow-up" : isAlertDown ? "arrow-down" : "circle-filled", color);
 
       return new StockItem(
         `${alertPrefix}${config.name ?? stockData.name}`,
@@ -814,6 +820,27 @@ export class StockTreeDataProvider
     }
     const direction = state.type === "surgeUp" ? "异动⇧⇧" : "异动⇩⇩";
     return `  ${direction}${state.changePercent.toFixed(2)}%`;
+  }
+
+  private isIndexLikeStock(config: StockConfigItem, stockData: StockData): boolean {
+    if (config.type !== "stock") {
+      return false;
+    }
+
+    const configuredName = (config.name ?? "").trim();
+    const realtimeName = (stockData.name ?? "").trim();
+    if (configuredName.includes("指数") || realtimeName.includes("指数")) {
+      return true;
+    }
+
+    if (!config.market) {
+      return false;
+    }
+
+    return (
+      (config.market === "sh" || config.market === "sz") &&
+      /^(000|399)\d{3}$/.test(config.code)
+    );
   }
 
   private isSortableRoot(item: StockItem | undefined): item is StockItem {
