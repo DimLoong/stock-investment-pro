@@ -98,7 +98,7 @@
             {
                 "command": "stockView.editHoldingShares",
                 "title": "编辑持仓信息",
-                "enablement": "view == stockView && viewItem == stockRoot"
+                "enablement": "view == stockView && (viewItem == stockRoot || viewItem == stockHolding)"
             },
             {
                 "command": "stockView.deleteStock",
@@ -133,7 +133,7 @@
             "view/item/context": [
                 {
                     "command": "stockView.editHoldingShares",
-                    "when": "view == stockView && viewItem == stockRoot",
+                    "when": "view == stockView && (viewItem == stockRoot || viewItem == stockHolding)",
                     "group": "stock@1"
                 },
                 {

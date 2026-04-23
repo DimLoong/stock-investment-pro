@@ -68,6 +68,13 @@ async function handleEditHolding(
     return;
   }
 
+  const shares = sharesInput.trim() ? Number(sharesInput.trim()) : 0;
+  if (shares <= 0) {
+    await stockDataProvider.updateHolding(item.configId, 0, undefined);
+    vscode.window.showInformationMessage(`已更新 ${item.label} 持仓信息`);
+    return;
+  }
+
   const costInput = await vscode.window.showInputBox({
     prompt: `请输入 ${item.label} 的成本价（可选）`,
     placeHolder: "输入大于0的数字，留空表示不设置成本价",
@@ -88,7 +95,6 @@ async function handleEditHolding(
     return;
   }
 
-  const shares = sharesInput.trim() ? Number(sharesInput.trim()) : 0;
   const costPrice = costInput.trim() ? Number(costInput.trim()) : undefined;
 
   await stockDataProvider.updateHolding(item.configId, shares, costPrice);
@@ -187,20 +193,37 @@ async function handleAddSingleStock(
 
   const sharesInput = await vscode.window.showInputBox({
     prompt: "请输入持股数量（可选）",
-    placeHolder: "输入正整数，留空表示仅看行情",
+    placeHolder: "输入大于等于0的整数，留空或0表示仅看行情",
     validateInput: (value) => {
       if (!value.trim()) {
         return null;
       }
       const num = Number(value);
-      if (!Number.isInteger(num) || num <= 0) {
-        return "持股数量必须是正整数";
+      if (!Number.isInteger(num) || num < 0) {
+        return "持股数量必须是大于等于0的整数";
       }
       return null;
     },
   });
 
   if (sharesInput === undefined) {
+    return;
+  }
+
+  const shares = sharesInput.trim() ? Number(sharesInput.trim()) : 0;
+  if (shares <= 0) {
+    const item: StockConfigItem = {
+      type: "stock",
+      market: selectedMarket,
+      code: parsed.code,
+    };
+
+    try {
+      await stockDataProvider.addItem(item);
+      vscode.window.showInformationMessage(`已添加股票 ${selectedMarket}.${parsed.code}`);
+    } catch (error) {
+      vscode.window.showErrorMessage(error instanceof Error ? error.message : "添加失败");
+    }
     return;
   }
 
@@ -227,7 +250,7 @@ async function handleAddSingleStock(
     type: "stock",
     market: selectedMarket,
     code: parsed.code,
-    shares: sharesInput.trim() ? Number(sharesInput.trim()) : undefined,
+    shares,
     costPrice: costPriceInput.trim() ? Number(costPriceInput.trim()) : undefined,
   };
 

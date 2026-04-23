@@ -8,12 +8,9 @@ const LEGACY_CONFIG_SECTION = "stockInvestment";
 const DEFAULT_ITEM: StockConfigItem = { type: "stock", market: "sh", code: "000001" };
 
 export class StockConfigService {
-  private readonly config = vscode.workspace.getConfiguration(CONFIG_SECTION);
-  private readonly legacyConfig = vscode.workspace.getConfiguration(LEGACY_CONFIG_SECTION);
-
   async load(): Promise<{ items: StockConfigItem[]; migrated: boolean }> {
-    const primaryRawList = this.config.get<unknown[]>(CONFIG_KEY, []);
-    const legacyRawList = this.legacyConfig.get<unknown[]>(CONFIG_KEY, []);
+    const primaryRawList = this.getConfig().get<unknown[]>(CONFIG_KEY, []);
+    const legacyRawList = this.getLegacyConfig().get<unknown[]>(CONFIG_KEY, []);
     const shouldUseLegacy = primaryRawList.length === 0 && legacyRawList.length > 0;
     const rawList = shouldUseLegacy ? legacyRawList : primaryRawList;
     const normalized: StockConfigItem[] = [];
@@ -126,11 +123,19 @@ export class StockConfigService {
   }
 
   private async persist(items: StockConfigItem[]): Promise<void> {
-    await this.config.update(
+    await this.getConfig().update(
       CONFIG_KEY,
       this.assignOrder(this.deduplicate(items)),
       vscode.ConfigurationTarget.Global
     );
+  }
+
+  private getConfig(): vscode.WorkspaceConfiguration {
+    return vscode.workspace.getConfiguration(CONFIG_SECTION);
+  }
+
+  private getLegacyConfig(): vscode.WorkspaceConfiguration {
+    return vscode.workspace.getConfiguration(LEGACY_CONFIG_SECTION);
   }
 
   private deduplicate(items: StockConfigItem[]): StockConfigItem[] {

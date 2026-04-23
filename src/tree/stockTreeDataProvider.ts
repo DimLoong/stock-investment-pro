@@ -6,6 +6,8 @@ import { displayTag, toApiSecId, toConfigId, toHoldingMap } from "../utils/stock
 import { StockItem } from "./stockItem";
 
 const DND_MIME = "application/vnd.code.tree.stockView";
+const SUMMARY_MARKET_VALUE_ID = "summary:marketValue";
+const SUMMARY_DAILY_PNL_ID = "summary:dailyProfitLoss";
 
 export class StockTreeDataProvider
   implements vscode.TreeDataProvider<StockItem>, vscode.TreeDragAndDropController<StockItem>
@@ -45,6 +47,12 @@ export class StockTreeDataProvider
   getChildren(element?: StockItem): Thenable<StockItem[]> {
     if (!element) {
       return Promise.resolve(this.getRootItems());
+    }
+    if (element.configId === SUMMARY_MARKET_VALUE_ID) {
+      return Promise.resolve(this.getHoldingMarketValueItems());
+    }
+    if (element.configId === SUMMARY_DAILY_PNL_ID) {
+      return Promise.resolve(this.getHoldingDailyPnlItems());
     }
     if (element.isRoot && element.configId) {
       return Promise.resolve(this.getDetailItems(element.configId));
@@ -247,23 +255,23 @@ export class StockTreeDataProvider
     return [
       new StockItem(
         "持仓市值",
-        vscode.TreeItemCollapsibleState.None,
+        vscode.TreeItemCollapsibleState.Collapsed,
         marketValueText,
         new vscode.ThemeIcon("graph", new vscode.ThemeColor("charts.blue")),
-        undefined,
+        SUMMARY_MARKET_VALUE_ID,
         undefined,
         false,
         "summaryItem"
       ),
       new StockItem(
         "今日盈亏",
-        vscode.TreeItemCollapsibleState.None,
+        vscode.TreeItemCollapsibleState.Collapsed,
         dailyProfitLossText,
         new vscode.ThemeIcon(
           this.summary.dailyProfitLoss >= 0 ? "arrow-up" : "arrow-down",
           new vscode.ThemeColor(this.summary.dailyProfitLoss >= 0 ? "charts.red" : "charts.green")
         ),
-        undefined,
+        SUMMARY_DAILY_PNL_ID,
         undefined,
         false,
         "summaryItem"
@@ -279,6 +287,90 @@ export class StockTreeDataProvider
         "summaryItem"
       ),
     ];
+  }
+
+  private getHoldingMarketValueItems(): StockItem[] {
+    const items: StockItem[] = [];
+
+    for (const [configId, holding] of this.holdings.entries()) {
+      const stockData = this.stocksData.get(configId);
+      const config = this.getConfiguredItem(configId);
+      if (!stockData || !config || holding.shares <= 0) {
+        continue;
+      }
+
+      const currentPrice = Number.parseFloat(stockData.current);
+      const marketValue = currentPrice * holding.shares;
+      items.push(
+        new StockItem(
+          config.name ?? stockData.name ?? config.code,
+          vscode.TreeItemCollapsibleState.None,
+          `${marketValue.toFixed(2)} (${holding.shares}股)`,
+          new vscode.ThemeIcon("symbol-number", new vscode.ThemeColor("charts.blue")),
+          configId,
+          "stock",
+          false,
+          "stockHolding"
+        )
+      );
+    }
+
+    if (items.length === 0) {
+      return [
+        new StockItem(
+          "暂无持仓",
+          vscode.TreeItemCollapsibleState.None,
+          "--",
+          new vscode.ThemeIcon("info")
+        ),
+      ];
+    }
+
+    return items;
+  }
+
+  private getHoldingDailyPnlItems(): StockItem[] {
+    const items: StockItem[] = [];
+
+    for (const [configId, holding] of this.holdings.entries()) {
+      const stockData = this.stocksData.get(configId);
+      const config = this.getConfiguredItem(configId);
+      if (!stockData || !config || holding.shares <= 0) {
+        continue;
+      }
+
+      const change = Number.parseFloat(stockData.change);
+      const dailyPnl = change * holding.shares;
+      const isUp = dailyPnl >= 0;
+      items.push(
+        new StockItem(
+          config.name ?? stockData.name ?? config.code,
+          vscode.TreeItemCollapsibleState.None,
+          isUp ? `+${dailyPnl.toFixed(2)}` : dailyPnl.toFixed(2),
+          new vscode.ThemeIcon(
+            isUp ? "arrow-up" : "arrow-down",
+            new vscode.ThemeColor(isUp ? "charts.red" : "charts.green")
+          ),
+          configId,
+          "stock",
+          false,
+          "stockHolding"
+        )
+      );
+    }
+
+    if (items.length === 0) {
+      return [
+        new StockItem(
+          "暂无持仓",
+          vscode.TreeItemCollapsibleState.None,
+          "--",
+          new vscode.ThemeIcon("info")
+        ),
+      ];
+    }
+
+    return items;
   }
 
   private getDetailItems(configId: string): StockItem[] {
