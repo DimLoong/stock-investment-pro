@@ -20,13 +20,21 @@ export class StockConfigService {
       if (typeof raw === "string") {
         shouldMigrate = true;
       }
+      if (
+        raw &&
+        typeof raw === "object" &&
+        Object.prototype.hasOwnProperty.call(raw as Record<string, unknown>, "order")
+      ) {
+        // Legacy compatibility: read order but migrate away from explicit order field.
+        shouldMigrate = true;
+      }
       const item = normalizeStockConfig(raw);
       if (item) {
         normalized.push(item);
       }
     }
 
-    let finalItems = this.applyOrder(this.deduplicate(normalized));
+    let finalItems = this.deduplicate(normalized);
     const shouldInitializeDefaults = rawList.length === 0 && finalItems.length === 0;
     if (shouldInitializeDefaults) {
       const defaults = this.loadDefaultItems();
@@ -88,7 +96,6 @@ export class StockConfigService {
         market: it.market,
         code: it.code,
         name: it.name,
-        order: it.order,
       };
       if (shares > 0) {
         next.shares = shares;
@@ -131,11 +138,7 @@ export class StockConfigService {
   }
 
   private async persist(items: StockConfigItem[]): Promise<void> {
-    await this.getConfig().update(
-      CONFIG_KEY,
-      this.assignOrder(this.deduplicate(items)),
-      vscode.ConfigurationTarget.Global
-    );
+    await this.getConfig().update(CONFIG_KEY, this.deduplicate(items), vscode.ConfigurationTarget.Global);
   }
 
   private getConfig(): vscode.WorkspaceConfiguration {
@@ -162,18 +165,6 @@ export class StockConfigService {
     return result;
   }
 
-  private applyOrder(items: StockConfigItem[]): StockConfigItem[] {
-    return [...items].sort((a, b) => {
-      const aOrder = Number.isFinite(a.order) ? (a.order as number) : Number.MAX_SAFE_INTEGER;
-      const bOrder = Number.isFinite(b.order) ? (b.order as number) : Number.MAX_SAFE_INTEGER;
-      return aOrder - bOrder;
-    });
-  }
-
-  private assignOrder(items: StockConfigItem[]): StockConfigItem[] {
-    return items.map((item, index) => ({ ...item, order: index }));
-  }
-
   private loadDefaultItems(): StockConfigItem[] {
     try {
       // Keep defaults in a standalone JSON file for maintainability.
@@ -185,7 +176,7 @@ export class StockConfigService {
         .map((item) => normalizeStockConfig(item))
         .filter((item): item is StockConfigItem => Boolean(item));
 
-      return this.applyOrder(this.deduplicate(normalized));
+      return this.deduplicate(normalized);
     } catch (error) {
       console.error("加载默认观察列表失败:", error);
       return [];

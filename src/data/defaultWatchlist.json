@@ -3,99 +3,84 @@
         "type": "stock",
         "market": "sh",
         "code": "000001",
-        "name": "上证指数",
-        "order": 0
+        "name": "上证指数"
     },
     {
         "type": "stock",
         "market": "sz",
         "code": "399001",
-        "name": "深证成指",
-        "order": 1
+        "name": "深证成指"
     },
     {
         "type": "stock",
         "market": "sz",
         "code": "399006",
-        "name": "创业板指",
-        "order": 2
+        "name": "创业板指"
     },
     {
         "type": "index",
         "code": "HSI",
-        "name": "恒生指数",
-        "order": 3
+        "name": "恒生指数"
     },
     {
         "type": "stock",
         "market": "hk",
         "code": "00700",
-        "name": "腾讯控股",
-        "order": 4
+        "name": "腾讯控股"
     },
     {
         "type": "stock",
         "market": "hk",
         "code": "09988",
-        "name": "阿里巴巴-SW",
-        "order": 5
+        "name": "阿里巴巴-SW"
     },
     {
         "type": "index",
         "code": "DJI",
-        "name": "道琼斯指数",
-        "order": 6
+        "name": "道琼斯指数"
     },
     {
         "type": "index",
         "code": "IXIC",
-        "name": "纳斯达克综合指数",
-        "order": 7
+        "name": "纳斯达克综合指数"
     },
     {
         "type": "index",
         "code": "SPX",
-        "name": "标普500",
-        "order": 8
+        "name": "标普500"
     },
     {
         "type": "stock",
         "market": "us",
         "code": "AAPL",
-        "name": "Apple",
-        "order": 9
+        "name": "Apple"
     },
     {
         "type": "stock",
         "market": "us",
         "code": "TSLA",
-        "name": "Tesla",
-        "order": 10
+        "name": "Tesla"
     },
     {
         "type": "stock",
         "market": "us",
         "code": "NVDA",
-        "name": "NVIDIA",
-        "order": 11
+        "name": "NVIDIA"
     },
     {
         "type": "stock",
         "market": "us",
         "code": "MSFT",
-        "name": "Microsoft",
-        "order": 12
+        "name": "Microsoft"
     },
     {
         "type": "sector",
         "code": "886078",
-        "name": "商业航天",
-        "order": 13
+        "name": "商业航天"
     },
     {
         "type": "future",
         "code": "IF0",
-        "name": "沪深300股指主连",
-        "order": 14
+        "name": "沪深300股指主连"
     }
 ]

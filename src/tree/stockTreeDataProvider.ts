@@ -1044,8 +1044,7 @@ export class StockTreeDataProvider
                 type: "stock",
                 market: "us",
                 code: DEV_TEST_STOCK_CODE,
-                name: "[DEV] 异动测试股",
-                order: -1
+                name: "[DEV] 异动测试股"
             },
             ...items
         ];

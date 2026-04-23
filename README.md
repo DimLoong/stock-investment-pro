@@ -54,7 +54,6 @@
             "market": "sh",     //股票市场"sz" | "sh" | "hk" | "us";
             "code": "00001",    //股票代码
             "name": "上证指数",  //可选，自定义显示名称
-            "order": 0,         //序号
             "shares": 200,      //持股数（股）
             "costPrice": 20,    //成本价
             "costDate": "2026-04-23" //购入时间（可选，影响今日盈亏和总盈亏数据 YYYY-MM-DD）
@@ -62,29 +61,27 @@
         {
             "type": "sector",
             "code": "886078",
-            "name": "商业航天",
-            "order": 1
+            "name": "商业航天"
         },
         {
             "type": "index",
             "code": "DJI",
-            "name": "道琼斯指数",
-            "order": 2
+            "name": "道琼斯指数"
         },
         {
             "type": "future",
             "code": "IF0",
-            "name": "沪深300股指主连",
-            "order": 3
+            "name": "沪深300股指主连"
         },
         {
             "type": "stock",
             "market": "us",
-            "code": "AAPL",
-            "order": 4
+            "code": "AAPL"
         }
     ]
 ```
+
+列表顺序默认按 `sidebarStock.stockCodeList` 的数组顺序展示，拖拽排序会自动重排并持久化该数组，无需手动维护 `order` 字段。
 
 添加股票命令支持批量输入，示例：`000001,000002,600519,300750`（英文逗号分隔）。
 
@@ -116,7 +113,7 @@
 1. 股票异动在标签栏提醒 ✅
 2. 期货类型支持 ✅
 3. 将获取的数据保存在本地，进行一个虚拟k线图渲染
-4. 隐式配置项目的order属性，自动根据json项目排列，这样手动改setting无需在意order属性
+4. 隐式配置项目的order属性，自动根据json项目排列，这样手动改setting无需在意order属性 ✅
 5. 【基础优化】刷新请求并发保护（TreeView 高频轮询场景）
    问题：当前 3s 轮询 + 配置变更刷新可能重叠，存在重复请求、状态抖动风险。
    方案：在 StockTreeDataProvider.refresh() 增加 in-flight 锁与“最后一次刷新合并”机制（coalescing）；旧刷新未完成时仅记录一次 pending。

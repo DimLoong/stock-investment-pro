@@ -19,7 +19,6 @@ export interface StockConfigItem {
   shares?: number;
   costPrice?: number;
   costDate?: string;
-  order?: number;
 }
 
 export interface HoldingInfo {
