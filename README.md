@@ -42,7 +42,7 @@
 
 在`VS Code Settings`中配置自选股代码与标签名称，示例如下：
 
-```
+```json
 "sidebarStock.tabName": "Sidebar Stock",    //自定义标签组标题
 "sidebarStock.alerts.enabled": true,        //是否启用异动提示（3分钟内涨跌幅达4%）
 "sidebarStock.alerts.windowMinutes": 3,     //异动监测时间范围/分钟
