@@ -2,6 +2,7 @@ import * as https from "https";
 import { TextDecoder } from "util";
 import { StockData } from "../../models/stock";
 import { ProviderResilienceCache } from "./providerResilienceCache";
+import { SymbolRoutingRegistry } from "./symbolRoutingRegistry";
 import { BatchFetchResult, QuoteErrorInfo, QuoteErrorType } from "./types";
 
 type FetchMode = "index" | "future";
@@ -13,6 +14,7 @@ interface SingleFetchResult {
 
 export class SinaIndexFutureProvider {
   private readonly providerName = "sina_index_future";
+  private readonly routingRegistry = SymbolRoutingRegistry.createDefault();
   private readonly resilience = new ProviderResilienceCache<StockData>({
     successTtlMs: 2000,
     failureBaseBackoffMs: 2000,
@@ -90,8 +92,8 @@ export class SinaIndexFutureProvider {
 
     const candidates =
       mode === "future"
-        ? this.buildFutureCandidates(normalized)
-        : this.buildIndexCandidates(normalized);
+        ? this.routingRegistry.resolve("future", normalized)
+        : this.routingRegistry.resolve("index", normalized);
     let sawNetworkError = false;
     let sawPayload = false;
 
@@ -131,47 +133,6 @@ export class SinaIndexFutureProvider {
       errorType: "unsupported_symbol",
       message: "未命中可用路由或上游返回空数据",
     };
-  }
-
-  private buildIndexCandidates(code: string): string[] {
-    if (code.startsWith("GB_") || code.startsWith("RT_HK")) {
-      return [code.toLowerCase()];
-    }
-
-    if (code === "HSI") {
-      return ["rt_hkHSI"];
-    }
-    if (code === "IXIC") {
-      return ["gb_ixic"];
-    }
-    if (code === "DJI") {
-      return ["gb_dji", "gb_djia"];
-    }
-    if (code === "SPX") {
-      return ["gb_inx", "gb_spx"];
-    }
-
-    return [`gb_${code.toLowerCase()}`];
-  }
-
-  private buildFutureCandidates(code: string): string[] {
-    if (code.startsWith("NF_") || code.startsWith("HF_")) {
-      const [prefix, ...rest] = code.split("_");
-      const symbol = rest.join("_").toUpperCase();
-      return [`${prefix.toLowerCase()}_${symbol}`];
-    }
-
-    // Future routing is type-priority: never fall back to gb_ stock channel.
-    if (this.isLikelyInternationalFuture(code)) {
-      return [`hf_${code.toUpperCase()}`, `nf_${code.toUpperCase()}`];
-    }
-
-    return [`nf_${code.toUpperCase()}`, `hf_${code.toUpperCase()}`];
-  }
-
-  private isLikelyInternationalFuture(code: string): boolean {
-    // CL / XAU / GC style pure-letter symbols are treated as international futures first.
-    return /^[A-Z]{2,6}$/.test(code);
   }
 
   private requestSinaPayload(requestCode: string): Promise<{ payload: string; networkError: boolean }> {
