@@ -77,7 +77,7 @@ export class StockConfigService {
     await this.persist(items.filter((it) => toConfigId(it) !== configId));
   }
 
-  async updateHolding(configId: string, shares: number, costPrice?: number): Promise<void> {
+  async updateHolding(configId: string, shares: number, costPrice?: number, costDate?: string): Promise<void> {
     const { items } = await this.load();
     const updated = items.map((it) => {
       if (toConfigId(it) !== configId || it.type !== "stock") {
@@ -95,6 +95,9 @@ export class StockConfigService {
       }
       if (costPrice !== undefined && costPrice > 0) {
         next.costPrice = costPrice;
+      }
+      if (costDate) {
+        next.costDate = costDate;
       }
       return next;
     });

@@ -1,4 +1,5 @@
 import { HoldingInfo, MarketType, StockConfigItem } from "../models/stock";
+import { parseIsoDateOnly } from "./date";
 
 const MARKET_TO_API: Record<MarketType, string> = {
   sz: "0",
@@ -233,6 +234,13 @@ export function normalizeStockConfig(raw: unknown): StockConfigItem | null {
     }
   }
 
+  if (obj.costDate !== undefined && obj.costDate !== null && obj.costDate !== "") {
+    const date = parseIsoDateOnly(String(obj.costDate));
+    if (date) {
+      item.costDate = date.iso;
+    }
+  }
+
   return item;
 }
 
@@ -243,7 +251,7 @@ export function toHoldingMap(items: StockConfigItem[]): Map<string, HoldingInfo>
       continue;
     }
     if (item.shares && item.shares > 0) {
-      map.set(toConfigId(item), { shares: item.shares, costPrice: item.costPrice });
+      map.set(toConfigId(item), { shares: item.shares, costPrice: item.costPrice, costDate: item.costDate });
     }
   }
   return map;

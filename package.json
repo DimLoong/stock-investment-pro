@@ -45,7 +45,7 @@
                             }
                         ]
                     },
-                    "description": "推荐使用 JSON 数组配置。股票示例：{\"type\":\"stock\",\"market\":\"sh\",\"code\":\"600519\",\"shares\":100,\"costPrice\":1680}；板块示例：{\"type\":\"sector\",\"name\":\"航天\",\"code\":\"886078\"}；指数示例：{\"type\":\"index\",\"code\":\"DJI\"}；期货示例：{\"type\":\"future\",\"code\":\"IF0\",\"name\":\"沪深300股指主连\"}。兼容旧字符串格式并会自动迁移。"
+                    "description": "推荐使用 JSON 数组配置。股票示例：{\"type\":\"stock\",\"market\":\"sh\",\"code\":\"600519\",\"shares\":100,\"costPrice\":1680,\"costDate\":\"2026-04-23\"}；板块示例：{\"type\":\"sector\",\"name\":\"航天\",\"code\":\"886078\"}；指数示例：{\"type\":\"index\",\"code\":\"DJI\"}；期货示例：{\"type\":\"future\",\"code\":\"IF0\",\"name\":\"沪深300股指主连\"}。兼容旧字符串格式并会自动迁移。"
                 },
                 "sidebarStock.tabName": {
                     "type": "string",

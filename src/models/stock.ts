@@ -18,12 +18,14 @@ export interface StockConfigItem {
   market?: MarketType;
   shares?: number;
   costPrice?: number;
+  costDate?: string;
   order?: number;
 }
 
 export interface HoldingInfo {
   shares: number;
   costPrice?: number;
+  costDate?: string;
 }
 
 export interface SummaryData {
